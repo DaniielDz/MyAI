@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { Bot } from 'lucide-react';
 
-const Navbar = () => {
+interface NavbarProps {
+  onOpenModal: () => void;
+}
+
+const Navbar = ({ onOpenModal }: NavbarProps) => {
   return (
     <header className="py-4 px-6 sm:px-10 fixed top-0 w-full z-50 bg-[#0B0F19]/80 backdrop-blur-md border-b border-white/5">
       <div className="container mx-auto flex justify-between items-center">
@@ -12,12 +16,12 @@ const Navbar = () => {
           <span className="font-bold text-2xl text-white tracking-tight">MyAI</span>
         </Link>
 
-        <Link
-          href="/chat"
-          className="hidden sm:inline-block bg-[#00D1FF] hover:bg-[#00A3CC] text-[#0B0F19] font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-[0_0_15px_rgba(0,209,255,0.3)]"
+        <button
+          onClick={onOpenModal}
+          className="hidden sm:inline-block bg-[#00D1FF] hover:bg-[#00A3CC] text-[#0B0F19] font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-[0_0_15px_rgba(0,209,255,0.3)] cursor-pointer"
         >
           Empezar
-        </Link>
+        </button>
       </div>
     </header>
   );

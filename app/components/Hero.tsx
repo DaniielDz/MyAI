@@ -1,7 +1,10 @@
-import Link from 'next/link';
 import { Bot } from 'lucide-react';
 
-const Hero = () => {
+interface HeroProps {
+  onOpenModal: () => void;
+}
+
+const Hero = ({ onOpenModal }: HeroProps) => {
   return (
     <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
       {/* Background decoration */}
@@ -19,14 +22,12 @@ const Hero = () => {
           Sumérgete en conversaciones inmersivas y crea lazos únicos con personajes de IA diseñados por ti o por la comunidad.
         </p>
 
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
-          <Link
-            href="/chat"
-            className="w-full sm:w-auto bg-[#00D1FF] hover:bg-[#00A3CC] text-[#0B0F19] font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 shadow-[0_0_20px_rgba(0,209,255,0.4)] hover:shadow-[0_0_30px_rgba(0,209,255,0.6)] transform hover:-translate-y-1"
-          >
-            Comienza a Chatear Ahora
-          </Link>
-        </div>
+        <button
+          onClick={onOpenModal}
+          className="w-full sm:w-auto bg-[#00D1FF] hover:bg-[#00A3CC] text-[#0B0F19] font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 shadow-[0_0_20px_rgba(0,209,255,0.4)] hover:shadow-[0_0_30px_rgba(0,209,255,0.6)] transform hover:-translate-y-1 cursor-pointer"
+        >
+          Comienza a Chatear Ahora
+        </button>
 
         {/* Image / Abstract Visual */}
         <div className="max-w-5xl mx-auto mt-12">
