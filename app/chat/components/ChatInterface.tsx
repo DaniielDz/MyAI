@@ -10,7 +10,9 @@ import { ChatInput } from './ChatInput';
 import { ChatHeaderMenu } from './ChatHeaderMenu';
 import CreateCharacterModal, { CharacterData } from '@/app/components/CreateCharacterModal';
 import DeleteChatModal from './DeleteChatModal';
-import { Message, Character } from '../../types/chat';
+import { Character } from '../../types/chat';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 
 interface ExtendedCharacter extends Character {
   systemPrompt: string;
@@ -25,31 +27,9 @@ const MOCK_CHARACTER: ExtendedCharacter = {
   systemPrompt: 'Eres Clara, una bióloga marina apasionada...'
 };
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: '1',
-    role: 'assistant',
-    content: '¡Hola! Soy Clara. Me emociona hablar sobre las maravillas del océano. ¿Qué te gustaría descubrir hoy?',
-    timestamp: new Date()
-  },
-  {
-    id: '2',
-    role: 'user',
-    content: 'Hola Clara. Siempre me han fascinado los arrecifes de coral. ¿Podrías contarme algo interesante sobre ellos?',
-    timestamp: new Date()
-  },
-  {
-    id: '3',
-    role: 'assistant',
-    content: '¡Por supuesto! Los arrecifes de coral son a menudo llamados "selvas tropicales del mar" por su increíble biodiversidad. Aunque cubren menos del 1% del fondo oceánico, albergan a casi el 25% de la vida marina del planeta. ¡Es fascinante!',
-    timestamp: new Date()
-  }
-];
-
 export default function ChatInterface() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
 
   // Modales
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,28 +43,20 @@ export default function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const { sendMessage, messages, status, } = useChat({
+    transport: new DefaultChatTransport({
+      body: { characterName: MOCK_CHARACTER.name }
+    }),
+    onFinish: () => { scrollToBottom(); },
+    onError: (err) => { console.error("Chat error:", err); }
+  })
+
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (content: string) => {
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, userMsg]);
-    setTimeout(() => {
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "¡Qué interesante! Cuéntame más sobre eso.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiMsg]);
-    }, 1000);
-  };
+
 
   const handleNewChat = () => {
     setEditingCharacter(null);
@@ -106,11 +78,16 @@ export default function ChatInterface() {
   };
 
   const handleConfirmDelete = () => {
-    setMessages([]);
     setIsDeleteModalOpen(false);
 
     router.push('/');
   };
+
+  const handleSendMessage = (input: string) => {
+    sendMessage({ text: input });
+  }
+
+  const isLoading = status === 'streaming' || status === "submitted";
 
   return (
     <div className="flex h-screen bg-[#0B0F19] overflow-hidden font-sans">
@@ -167,6 +144,7 @@ export default function ChatInterface() {
                 character={MOCK_CHARACTER}
               />
             ))}
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (<div className="text-gray-500 text-sm animate-pulse pl-4 mb-4">Escribiendo...</div>)}
             <div ref={messagesEndRef} />
           </div>
         </div>
