@@ -1,8 +1,9 @@
+import { Character } from '@/app/types/chat';
+import { UIMessage } from 'ai';
 import clsx from 'clsx';
-import { Message, Character } from '../../types/chat';
 
 interface MessageBubbleProps {
-  message: Message;
+  message: UIMessage;
   character: Character;
 }
 
@@ -35,7 +36,14 @@ export const MessageBubble = ({ message, character }: MessageBubbleProps) => {
               : "bg-[#1E293B] text-gray-100 rounded-tl-none border border-white/5" // Gris oscuro IA
           )}
         >
-          {message.content}
+          {message.parts.map((part, index) => (
+            <p key={index} className="mb-2 last:mb-0">
+              {part.type === 'text'
+                ? <span key={index}>{part.text}</span>
+                : null
+              }
+            </p>
+          ))}
         </div>
       </div>
     </div>
