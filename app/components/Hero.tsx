@@ -1,4 +1,5 @@
 import { Bot } from 'lucide-react';
+import Image from 'next/image';
 
 interface HeroProps {
   onOpenModal: () => void;
@@ -29,25 +30,24 @@ const Hero = ({ onOpenModal }: HeroProps) => {
           Comienza a Chatear Ahora
         </button>
 
-        {/* Image / Abstract Visual */}
+        {/* Image / Screenshot Visual */}
         <div className="max-w-5xl mx-auto mt-12">
           <div className="relative aspect-video bg-[#111625] rounded-2xl shadow-2xl border border-white/5 overflow-hidden group">
             <div className="absolute inset-0 bg-linear-to-br from-[#00D1FF]/20 via-transparent to-[#78FFD6]/10 opacity-60"></div>
 
-            {/* Abstract Nodes Network Illustration */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-30">
-              <svg className="w-full h-full" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="400" cy="225" r="40" fill="#00D1FF" fillOpacity="0.2" />
-                <circle cx="200" cy="150" r="20" fill="#78FFD6" fillOpacity="0.2" />
-                <circle cx="600" cy="300" r="30" fill="#00D1FF" fillOpacity="0.2" />
-                <path d="M400 225 L200 150" stroke="#00D1FF" strokeOpacity="0.2" strokeWidth="2" />
-                <path d="M400 225 L600 300" stroke="#00D1FF" strokeOpacity="0.2" strokeWidth="2" />
-              </svg>
+            <div className="absolute inset-0">
+              <Image
+                src="/hero-screenshot.png"
+                alt="Captura de pantalla de MyAI"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 1000px"
+              />
             </div>
 
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative">
-                <div className="absolute inset-0 bg-[#00D1FF] blur-2xl opacity-20 animate-pulse"></div>
+                <div className="absolute inset-0 bg-[#00D1FF] blur-2xl opacity-10 animate-pulse"></div>
                 <Bot className="w-20 h-20 text-[#00D1FF] relative z-10" />
               </div>
             </div>

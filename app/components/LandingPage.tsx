@@ -4,7 +4,6 @@ import { useState } from "react";
 import NavBar from "./NavBar";
 import Hero from "./Hero";
 import Features from "./Features";
-import CharacterSection from "./CharacterSection";
 import CreateCharacterModal from "./CreateCharacterModal";
 import Footer from "./Footer";
 
@@ -21,7 +20,6 @@ export default function LandingPage() {
       <main className="grow">
         <Hero onOpenModal={openModal} />
         <Features />
-        <CharacterSection />
       </main>
 
       <Footer />
