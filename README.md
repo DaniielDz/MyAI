@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MyAI — Personajes impulsados por IA
 
-## Getting Started
+<div align="center">
+	<img src="./public/hero-screenshot.png" alt="MyAI - Captura de pantalla" width="700" style="border-radius:12px;">
+</div>
 
-First, run the development server:
+Una interfaz de chat moderna que permite crear personajes conversacionales personalizados y chatear con ellos usando APIs de generación de texto.
+
+Este proyecto se desarrolló para demostrar habilidades en la integración y uso de APIs de IA (transmisión de respuestas, prompts de sistema/personaje, UI con Next.js y React). Se construyó en un fin de 2 días trabajando part-time — la funcionalidad principal está implementada y funcionando como se esperaba; sin embargo, aún quedan oportunidades de mejora (ver la sección "Mejoras y próximos pasos").
+
+---
+
+## Descripción
+
+MyAI es una demo de chat basada en Next.js y TailwindCSS que pone el foco en la personalización de “personajes” por medio de prompts de sistema y el manejo de conversaciones en streaming. Incluye:
+
+- Creación/edición/eliminación de personajes con avatar y prompt personalizado.
+- Chat en tiempo real (streaming) usando el SDK de Google Generative AI / `ai`.
+- Persistencia local (localStorage) para personajes e historial de chat.
+- Interfaz ligera y responsiva con componentes reutilizables.
+
+## Características principales
+
+- Personalización de personajes: nombre, avatar y "system prompt".
+- Conversación en streaming para respuestas más naturales y fluidas.
+- Guardado de historial por personaje en `localStorage`.
+- Frontend con Next.js 16 y React 19.
+- Uso del SDK: `@ai-sdk/google`, `@ai-sdk/react` y `ai`.
+
+## Tech stack 🔧
+
+- Next.js 16
+- React 19
+- TypeScript
+- TailwindCSS v4
+- `@ai-sdk/google`, `ai`, `@ai-sdk/react`
+- `lucide-react` para iconografía
+
+## Requisitos previos
+
+- Node.js 18+ (recomendado)
+- NPM (o yarn/pnpm)
+- Una API key válida para Google Generative AI (o la integración que desee usar)
+
+## Variables de entorno
+
+La API consta de una ruta que ejecuta la comunicación con el proveedor de IA en el servidor (Edge runtime). Para que la aplicación funcione correctamente configure la siguiente variable de entorno:
+
+```bash
+GOOGLE_GENERATIVE_AI_API_KEY=su_api_key
+```
+
+Guárdela en un archivo `.env.local` en el root del proyecto o configure la variable en su entorno de despliegue.
+
+> Importante: Nunca comitees las API keys en el repositorio.
+
+## Instalación y ejecución (desarrollo)
+
+1. Instale dependencias:
+
+```bash
+npm install
+# o: pnpm install
+```
+
+2. Ejecute la app en modo desarrollo:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Abrir la app:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Ejecución en producción
 
-## Learn More
+1. Build:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Start:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run start
+```
 
-## Deploy on Vercel
+## Estructura del proyecto (resumen)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `app/` — Rutas y componentes principales (Landing, Chat, Modal para crear personajes, etc.)
+- `app/api/chat/route.ts` — Endpoint server-side (Edge) que consume la API de Google Generative AI para streaming de respuestas.
+- `lib/storage.ts` — Utilidades para persistir personajes e historial en `localStorage`.
+- `public/hero-screenshot.png` — Captura de pantalla usada en el Hero
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Cómo usar
+
+1. Abre la app.
+2. Pulsa "Empezar" o "Comenzar" y crea un personaje (nombre, prompt, avatar opcional).
+3. Selecciona el personaje y empieza a chatear. Las respuestas aparecen en streaming.
+4. El historial se guarda localmente por personaje.
+
+## Notas sobre seguridad y despliegue
+
+- Mantén la clave `GOOGLE_GENERATIVE_AI_API_KEY` en el servidor (no exponer en el cliente).
+- Para despliegue en Vercel u otro proveedor, configura la variable de entorno en la plataforma.
+
+## Limitaciones y mejoras ✅⚠️
+
+El proyecto se hizo en 2 días trabajando part-time; por tanto, aunque las funcionalidades básicas están implementadas, hay mejoras importantes que se pueden abordar:
+
+- Almacenamiento en servidor o base de datos para sincronización entre dispositivos.
+- Autenticación (usuarios) y control de acceso a historiales.
+- Pruebas unitarias / E2E para garantizar estabilidad.
+- Mejor manejo de errores y mensajes amigables en la UI.
+- Integración con otros modelos o proveedores y configuración dinámica.
+- Manejo avanzado de tokens y limitaciones de uso del proveedor.
+- Internacionalización y mejoras de accesibilidad (ARIA).
+
+## Contribuciones
+
+Este es un proyecto demo — siéntete libre de abrir issues o PRs para proponer mejoras o correcciones. Si quieres clonar y trabajar en el repo, sigue la sección "Instalación".
+
+## Autor
+
+- Proyecto desarrollado por @DaniielDz — creado como demostración de integración con APIs de IA y experiencia en UI/UX.
+
+---
+
+**Estado del desarrollo:** Completado en 2 días de trabajo part-time. Funcionamiento principal listo y verificado; se dejaron notas de mejoras para iteraciones futuras.
