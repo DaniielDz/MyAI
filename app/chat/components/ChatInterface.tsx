@@ -1,30 +1,30 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Menu, ArrowLeft, PanelLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChatSidebar } from './ChatSidebar';
-import { MessageBubble } from './MessageBubble';
-import { ChatInput } from './ChatInput';
 import { ChatHeaderMenu } from './ChatHeaderMenu';
 import CreateCharacterModal, { CharacterData } from '@/app/components/CreateCharacterModal';
 import DeleteChatModal from './DeleteChatModal';
+import ChatArea from './ChatArea';
 import { Character } from '../../types/chat';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { getCharacterById, removeCharacter as removeCharacterFromStorage } from '@/lib/storage';
+// UIMessage, useChat and DefaultChatTransport are used in ChatArea
 
 interface ExtendedCharacter extends Character {
   systemPrompt: string;
 }
 
-const MOCK_CHARACTER: ExtendedCharacter = {
-  id: 'clara',
-  name: 'Clara, la bióloga marina',
-  role: 'Experta en Océanos',
+const DEFAULT_CHARACTER: ExtendedCharacter = {
+  id: 'default',
+  name: 'Asistente IA',
+  role: 'Asistente Virtual',
   status: 'online',
-  avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop',
-  systemPrompt: 'Eres Clara, una bióloga marina apasionada...'
+  avatar: 'https://ui-avatars.com/api/?name=AI&background=00D1FF&color=fff',
+  systemPrompt: 'Eres un asistente útil y amable.'
 };
 
 export default function ChatInterface() {
@@ -36,25 +36,105 @@ export default function ChatInterface() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [editingCharacter, setEditingCharacter] = useState<CharacterData | null>(null);
+  const [isCharacterLoaded, setIsCharacterLoaded] = useState(false);
+  const searchParams = useSearchParams();
+  const paramCharacterId = searchParams.get('characterId') || undefined;
+  const [character, setCharacter] = useState<ExtendedCharacter>(() => {
+    if (typeof window !== 'undefined' && paramCharacterId) {
+      const found = getCharacterById(paramCharacterId);
+      if (found) {
+        return {
+          id: found.id,
+          name: found.name,
+          avatar: found.avatar,
+          role: 'IA Personalizada',
+          status: 'online',
+          systemPrompt: found.systemPrompt,
+        };
+      }
+    }
+    return DEFAULT_CHARACTER;
+  });
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const { sendMessage, messages, status, } = useChat({
-    transport: new DefaultChatTransport({
-      body: { characterName: MOCK_CHARACTER.name }
-    }),
-    onFinish: () => { scrollToBottom(); },
-    onError: (err) => { console.error("Chat error:", err); }
-  })
-
-
+  // reapplies character when `paramCharacterId` changes
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!paramCharacterId) {
+      setCharacter(DEFAULT_CHARACTER);
+      setIsCharacterLoaded(true);
+      return;
+    }
+    try {
+      const found = getCharacterById(paramCharacterId);
+      if (found) {
+        setCharacter({
+          id: found.id,
+          name: found.name,
+          avatar: found.avatar,
+          role: 'IA Personalizada',
+          status: 'online',
+          systemPrompt: found.systemPrompt
+        });
+      } else {
+        setCharacter(DEFAULT_CHARACTER);
+      }
+    } catch (error) {
+      console.error('Error loading character:', error);
+      setCharacter(DEFAULT_CHARACTER);
+    }
+  }, [paramCharacterId]);
+
+  const [chatKey, setChatKey] = useState(paramCharacterId ?? 'default');
+
+
+  // Listen to external updates such as when a character is edited in the modal
+  useEffect(() => {
+    const handleCharacterUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail;
+        if (!detail || !detail.id) return;
+        if (detail.id !== paramCharacterId) return; // only react for current character
+        // reload character data from storage
+        const found = getCharacterById(detail.id);
+        if (found) {
+          setCharacter({
+            id: found.id!,
+            name: found.name,
+            avatar: found.avatar,
+            role: 'IA Personalizada',
+            status: 'online',
+            systemPrompt: found.systemPrompt
+          });
+        }
+        // force remount of ChatArea so useChat is reinitialized with the updated prompt
+        setChatKey(`${detail.id}-${Date.now()}`);
+      } catch (err) {
+        console.error('Error handling character update event', err);
+      }
+    };
+    window.addEventListener('myai:character-updated', handleCharacterUpdated as EventListener);
+    return () => window.removeEventListener('myai:character-updated', handleCharacterUpdated as EventListener);
+  }, [paramCharacterId]);
+
+  // (ChatArea handles messages and scrolling)
+
+  // For stability, actual chat hook (useChat) and message handling live in ChatArea child component.
+
+  // ChatArea is a child component that mounts/unmounts when the character changes to ensure
+  // the useChat hook is recreated with the correct transport.
+  // `chatKey` ensures ChatArea remounts (new instance) when the character ID changes.
+  useEffect(() => {
+    setChatKey(paramCharacterId ?? 'default');
+  }, [paramCharacterId]);
+
+  // ChatArea component has been extracted to its own file (ChatArea.tsx)
+
+
+  // Scrolling handled inside ChatArea
+
+  // Mark character as loaded (no op for ChatArea load itself)
+  useEffect(() => {
+    setIsCharacterLoaded(true);
+  }, [paramCharacterId]);
 
 
 
@@ -65,10 +145,10 @@ export default function ChatInterface() {
 
   const handleEditChat = () => {
     setEditingCharacter({
-      id: MOCK_CHARACTER.id,
-      name: MOCK_CHARACTER.name,
-      systemPrompt: MOCK_CHARACTER.systemPrompt,
-      avatar: MOCK_CHARACTER.avatar
+      id: character.id,
+      name: character.name,
+      systemPrompt: (character as ExtendedCharacter).systemPrompt,
+      avatar: character.avatar
     });
     setIsModalOpen(true);
   };
@@ -78,16 +158,25 @@ export default function ChatInterface() {
   };
 
   const handleConfirmDelete = () => {
+    if (character.id && character.id !== 'default') {
+      removeCharacterFromStorage(character.id);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('myai:character-removed', { detail: { id: character.id } }));
+      }
+    }
     setIsDeleteModalOpen(false);
-
     router.push('/');
   };
 
-  const handleSendMessage = (input: string) => {
-    sendMessage({ text: input });
-  }
+  // ChatArea sends messages using the `sendMessage` provided by useChat inside it.
 
-  const isLoading = status === 'streaming' || status === "submitted";
+  if (!isCharacterLoaded) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#0B0F19]">
+        <div className="text-gray-400">Cargando personaje...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#0B0F19] overflow-hidden font-sans">
@@ -116,14 +205,14 @@ export default function ChatInterface() {
             <div className="flex items-center gap-3 ml-2">
               <div className="relative">
                 <img
-                  src={MOCK_CHARACTER.avatar}
-                  alt={MOCK_CHARACTER.name}
+                  src={character.avatar}
+                  alt={character.name}
                   className="w-10 h-10 rounded-full object-cover border border-white/10"
                 />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#111625] rounded-full"></span>
               </div>
               <div className="leading-tight">
-                <h2 className="text-white font-bold text-sm md:text-base">{MOCK_CHARACTER.name}</h2>
+                <h2 className="text-white font-bold text-sm md:text-base">{character.name}</h2>
                 <p className="text-xs text-green-500 font-medium">Online</p>
               </div>
             </div>
@@ -137,19 +226,11 @@ export default function ChatInterface() {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           <div className="max-w-4xl mx-auto flex flex-col justify-end min-h-full">
-            {messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                character={MOCK_CHARACTER}
-              />
-            ))}
-            {isLoading && messages[messages.length - 1]?.role === 'user' && (<div className="text-gray-500 text-sm animate-pulse pl-4 mb-4">Escribiendo...</div>)}
-            <div ref={messagesEndRef} />
+            <div key={chatKey} className="w-full">
+              <ChatArea character={character} characterId={paramCharacterId} />
+            </div>
           </div>
         </div>
-
-        <ChatInput onSendMessage={handleSendMessage} />
       </main>
 
       <CreateCharacterModal
@@ -162,7 +243,7 @@ export default function ChatInterface() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        chatName={MOCK_CHARACTER.name}
+        chatName={character.name}
       />
     </div>
   );
