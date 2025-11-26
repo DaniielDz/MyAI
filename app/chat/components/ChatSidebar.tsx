@@ -1,6 +1,10 @@
 import clsx from 'clsx';
 import { Plus, X, Bot } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { CharacterData } from '@/app/components/CreateCharacterModal';
+import { getCharacters } from '@/lib/storage';
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -15,6 +19,28 @@ const RECENT_CHATS = [
 ];
 
 export const ChatSidebar = ({ isOpen, onClose, onNewChat }: ChatSidebarProps) => {
+  const [localCharacters, setLocalCharacters] = useState<CharacterData[]>([]);
+  const searchParams = useSearchParams();
+  const currentCharacterId = searchParams.get('characterId') || undefined;
+
+  useEffect(() => {
+    try {
+      setLocalCharacters(getCharacters());
+    } catch (e) {
+      setLocalCharacters([]);
+      console.error(e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setLocalCharacters(getCharacters());
+    window.addEventListener('myai:character-updated', handler as EventListener);
+    window.addEventListener('myai:character-removed', handler as EventListener);
+    return () => {
+      window.removeEventListener('myai:character-updated', handler as EventListener);
+      window.removeEventListener('myai:character-removed', handler as EventListener);
+    };
+  }, []);
   return (
     <>
       <div
@@ -63,23 +89,17 @@ export const ChatSidebar = ({ isOpen, onClose, onNewChat }: ChatSidebarProps) =>
               Chats Recientes
             </h3>
 
-            {RECENT_CHATS.map((chat) => (
-              <button
-                key={chat.id}
-                className={clsx(
+            {(localCharacters.length > 0 ? localCharacters : RECENT_CHATS).map((chat) => (
+              <Link key={chat.id} href={`/chat?characterId=${chat.id}`} className={clsx(
                   "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
-                  chat.active
-                    ? "bg-[#1E293B] border border-white/5"
-                    : "hover:bg-white/5 text-gray-400 hover:text-white"
+                  chat.id === currentCharacterId ? 'bg-[#1E293B] border border-white/5 text-white' : 'hover:bg-white/5 text-gray-400 hover:text-white'
                 )}
               >
                 <img src={chat.avatar} alt={chat.name} className="w-10 h-10 rounded-full object-cover" />
                 <div className="flex-1 min-w-0">
-                  <p className={clsx("text-sm font-medium truncate", chat.active ? "text-white" : "")}>
-                    {chat.name}
-                  </p>
+                  <p className={clsx("text-sm font-medium truncate")}>{chat.name}</p>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
 

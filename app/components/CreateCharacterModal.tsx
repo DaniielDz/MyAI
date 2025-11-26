@@ -1,4 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
+import { addOrUpdateCharacter, type LocalCharacter } from '@/lib/storage';
 import { X, User, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -39,26 +40,22 @@ const CharacterForm = ({ initialData, onClose }: { initialData?: CharacterData |
       const charId = initialData?.id || `custom-${Date.now()}`;
 
       try {
-        const characterData: CharacterData = {
+        const characterData: LocalCharacter = {
           id: charId,
           name,
           systemPrompt,
-          avatar: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=00D1FF&color=fff`
+          avatar: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=00D1FF&color=fff`,
+          role: 'assistant',
+          status: 'online',
         };
 
-        const storedChars = localStorage.getItem('myai_characters');
-        const existingChars: CharacterData[] = storedChars ? JSON.parse(storedChars) : [];
-
-        let newChars: CharacterData[];
-
-        if (initialData?.id) {
-          newChars = existingChars.map((c) => c.id === charId ? characterData : c);
-        } else {
-          newChars = [...existingChars, characterData];
+        addOrUpdateCharacter(characterData);
+        // Emit an event so the chat page can react to updated character data (without changing the id)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('myai:character-updated', { detail: { id: charId } }));
         }
-
-        localStorage.setItem('myai_characters', JSON.stringify(newChars));
-        router.push(`/chat?characterId=${charId}&updated=${Date.now()}`);
+        // Keep the characterId consistent; no need to change id when updating/creating.
+        router.push(`/chat?characterId=${charId}`);
 
         setIsLoading(false);
         onClose();
