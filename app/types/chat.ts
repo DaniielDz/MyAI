@@ -11,6 +11,7 @@ export interface Character {
   avatar: string;
   role: string;
   status: "online" | "offline";
+  systemPrompt?: string;
 }
 
 export interface ChatSession {
